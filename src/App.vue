@@ -1,65 +1,64 @@
 <script setup>
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import Header from './components/Header.vue';
 import Footer from './components/Footer.vue';
 import Guitarra from './components/Guitarra.vue';
 import { db } from './data/guitarras';
 
-const guitars = ref(db)
-const carrito = ref([])
+const guitars = ref(db);
+const carrito = ref([]);
 
-function agregarCarrito(guitar){
-    const guitarId = carrito
-    .value.findIndex(g => g.id === guitar.id)
-  if(guitarId === -1 )
-    carrito.value.push({...guitar, cantidad: 1 })
-  else
-    carrito.value[guitarId].cantidad++
+const totalCarrito = computed(() => {
+  return carrito.value.reduce((total, producto) => total + producto.precio * producto.cantidad, 0);
+});
+
+function agregarCarrito(guitar) {
+  const productoEnCarrito = carrito.value.find(p => p.id === guitar.id);
+  if (productoEnCarrito) {
+    productoEnCarrito.cantidad++;
+  } else {
+    carrito.value.push({ ...guitar, cantidad: 1 });
+  }
 }
 
-function quitaUno(id) {
-  const guitarraId = carrito.value.findIndex(g => g.id === id);
-  if (guitarraId !== -1) {
-    if (carrito.value[guitarraId].cantidad > 1) {
-      carrito.value[guitarraId].cantidad--;
-    } else {
-      carrito.value.splice(guitarraId, 1);
+function quitarUno(id) {
+  const productoEnCarrito = carrito.value.find(p => p.id === id);
+  if (productoEnCarrito) {
+    productoEnCarrito.cantidad--;
+    if (productoEnCarrito.cantidad === 0) {
+      carrito.value = carrito.value.filter(p => p.id !== id);
     }
   }
 }
 
-function quitaGuitarra(id) {
-  const guitarraId = carrito.value.findIndex(g => g.id === id);
-  if (guitarraId !== -1) {
-    carrito.value.splice(guitarraId, 1);
-  }
+function quitarGuitarra(id) {
+  carrito.value = carrito.value.filter(p => p.id !== id);
 }
 
 function vaciarCarrito() {
-  carrito.value = [];
+  carrito.value = [];
 }
 </script>
 
 <template>
   <Header
     :carrito="carrito"
+    :total="totalCarrito"
     @agregar-carrito="agregarCarrito"
     @quita-uno="quitaUno"
     @quita-guitarra="quitarGuitarra"
-    @vaciar-carrito=""vaciarCarrito
-
+    @vaciar-carrito="vaciarCarrito"
   />
-   <main class="container-xl mt-5">
-        <h2 class="text-center">Nuestra Colección</h2>
-
-        <div class="row mt-5">
-            <Guitarra 
-              v-for="guitar in guitars"
-              :key="guitar.id"
-              :guitar="guitar"
-              @agregar-carrito="agregarCarrito"
-              />
-        </div>
-    </main>
+  <main class="container-xl mt-5">
+    <h2 class="text-center">Nuestra Colección</h2>
+    <div class="row mt-5">
+      <Guitarra
+        v-for="guitar in guitars"
+        :key="guitar.id"
+        :guitar="guitar"
+        @agregar-carrito="agregarCarrito"
+      />
+    </div>
+  </main>
   <Footer />
 </template>
